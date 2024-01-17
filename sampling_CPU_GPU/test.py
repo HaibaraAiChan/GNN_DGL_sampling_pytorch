@@ -154,13 +154,15 @@ def run(args, device, data):
 	fan_out_list = ' '.join(fan_out_list).split()
 	processed_fan_out = [int(fanout) for fanout in fan_out_list] # remove empty string
 
-	sampler = dgl.dataloading.MultiLayerNeighborSampler(processed_fan_out)
+	# sampler = dgl.dataloading.MultiLayerNeighborSampler(processed_fan_out)
 	full_batch_size = len(train_nid)
 	batch_size = int(full_batch_size/args.num_batch) + (full_batch_size % args.num_batch>0)
 	args.batch_size = batch_size
-	
+	sampler = dgl.dataloading.MultiLayerNeighborSampler(
+		processed_fan_out,
+		)
 
-	args.num_workers = 0
+	args.num_workers = 4
 	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
 		g,
 		train_nid,
@@ -172,6 +174,7 @@ def run(args, device, data):
 		drop_last=False,
 		# use_uva=True,
 		num_workers=args.num_workers)
+ 
 	# if args.GPUmem:
 	# 	see_memory_usage("----------------------------------------before model to device ")
 
@@ -225,23 +228,7 @@ def run(args, device, data):
 		print('mean data move to GPU time/epoch {}'.format(mean(data_move_time_list)))
 		
 
-		
 
-
-
-# def count_parameters(model):
-# 	pytorch_total_params = sum(torch.numel(p) for p in model.parameters())
-# 	print('total model parameters size ', pytorch_total_params)
-# 	print('trainable parameters')
-    
-# 	for name, param in model.named_parameters():
-# 		if param.requires_grad:
-# 			print (name + ', '+str(param.data.shape))
-# 	print('-'*40)
-# 	print('un-trainable parameters')
-# 	for name, param in model.named_parameters():
-# 		if not param.requires_grad:
-# 			print (name, param.data.shape)
 
 def main():
 	# get_memory("-----------------------------------------main_start***************************")
@@ -269,34 +256,18 @@ def main():
 	#-------------------------------------------------------------------------------------------------------
 	argparser.add_argument('--num-runs', type=int, default=1)
 	argparser.add_argument('--num-epochs', type=int, default=2)
-	# argparser.add_argument('--num-epochs', type=int, default=500)
-	# argparser.add_argument('--num-runs', type=int, default=10)
-	# argparser.add_argument('--num-epochs', type=int, default=500)
-	# argparser.add_argument('--num-hidden', type=int, default=64)	
 	argparser.add_argument('--num-hidden', type=int, default=128)
 
 
 	argparser.add_argument('--num-layers', type=int, default=3)
 	argparser.add_argument('--fan-out', type=str, default='10,25,30')
 
-
-
 	argparser.add_argument('--num-batch', type=int, default=1) #<---===========
 	argparser.add_argument('--batch-size', type=int, default=0)
 
-	# argparser.add_argument('--num-layers', type=int, default=2)
-	# argparser.add_argument('--fan-out', type=str, default='10,25')
-	# argparser.add_argument('--num-batch', type=int, default=2)
 	
 	argparser.add_argument('--log-indent', type=float, default=0)
 #--------------------------------------------------------------------------------------
-	# argparser.add_argument('--target-redun', type=float, default=1.9)
-	# argparser.add_argument('--alpha', type=float, default=1)
-	# argparser.add_argument('--walks', type=int, default=0)
-	# argparser.add_argument('--walkterm', type=int, default=1)
-	# argparser.add_argument('--update-times', type=int, default=1)
-	# argparser.add_argument('--redundancy_tolarent_steps', type=int, default=2)
-
 	# argparser.add_argument('--lr', type=float, default=1e-2)
 	argparser.add_argument('--lr', type=float, default=1e-3)
 	argparser.add_argument('--dropout', type=float, default=0.5)

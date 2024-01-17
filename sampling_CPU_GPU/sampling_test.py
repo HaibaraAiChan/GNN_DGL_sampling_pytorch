@@ -160,7 +160,7 @@ def run(args, device, data):
 	args.batch_size = batch_size
 	
 
-	args.num_workers = 0
+	args.num_workers = 4
 	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
 		g,
 		train_nid,
@@ -297,7 +297,7 @@ def main():
 
 	#-------------------------------------------------------------------------------------------------------
 	argparser.add_argument('--num-runs', type=int, default=1)
-	argparser.add_argument('--num-epochs', type=int, default=2)
+	argparser.add_argument('--num-epochs', type=int, default=200)
 	# argparser.add_argument('--num-epochs', type=int, default=500)
 	# argparser.add_argument('--num-runs', type=int, default=10)
 	# argparser.add_argument('--num-epochs', type=int, default=500)
