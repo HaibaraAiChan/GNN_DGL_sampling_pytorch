@@ -13,6 +13,12 @@ from statistics import mean
 import random
 import numpy as np
 import time
+import sys
+sys.path.insert(0,'..')
+sys.path.insert(0,'../micro_batch_train')
+sys.path.insert(0,'../models')
+sys.path.insert(0,'../utils')
+from memory_usage import see_memory_usage, nvidia_smi_usage
 
 def set_seed(args):
 	random.seed(args.seed)
@@ -115,52 +121,29 @@ def train(args, device, g, dataset, model):
 
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=5e-4)
     train_time_list=[]
-    dataloader_t_list=[]
-    feature_label_time_list = []
-    model_time_list = []
-    loss_opt_time_list = []
-    
     for epoch in range(args.epochs):
-        print('epoch ', epoch)
         model.train()
         total_loss = 0
-        dataloader_time = 0
-        f_l_time = 0
-        model_time = 0
-        left_time = 0
         train_start= time.time()
-        
+        see_memory_usage("----------------------------------------before train dataloader ")
         for it, (input_nodes, output_nodes, blocks) in enumerate(train_dataloader):
-            after_dataloader_t = time.time()
-            dataloader_time += after_dataloader_t - train_start
-            x = blocks[0].srcdata['feat']###############
-            y = blocks[-1].dstdata['label']###############
-            before_model_t = time.time()
-            y_hat = model(blocks, x)###############
-            after_model_t = time.time()
-            f_l_time += before_model_t - after_dataloader_t
-            model_time += after_model_t - before_model_t
-            loss = F.cross_entropy(y_hat, y)###############
-            opt.zero_grad()###############
-            loss.backward()###############
-            opt.step()###############
-            after_opt_step = time.time()
-            left_time += after_opt_step - after_model_t
+            see_memory_usage("----------------------------------------after train dataloader ")
+            x = blocks[0].srcdata['feat']
+            y = blocks[-1].dstdata['label']
+            see_memory_usage("----------------------------------------before model ")
+            y_hat = model(blocks, x)
+            see_memory_usage("----------------------------------------after model ")
+            loss = F.cross_entropy(y_hat, y)
+            opt.zero_grad()
+            loss.backward()
+            see_memory_usage("----------------------------------------after backward ")
+            opt.step()
+            see_memory_usage("----------------------------------------after optimizer.step ")
             total_loss += loss.item()
-            
-        train_end = time.time()
+        train_end= time.time()
         if epoch >= args.log_indent:
                 t0 = train_end-train_start
                 train_time_list.append(t0)
-                print('train time ',t0)
-                dataloader_t_list.append(dataloader_time)
-                print('dataloader_time ', dataloader_time)
-                feature_label_time_list.append(f_l_time)
-                print('feature and label time ', f_l_time)
-                model_time_list.append(model_time)
-                print('model time ', model_time)
-                loss_opt_time_list.append(left_time)
-                print('loss, backward, opt step  time ', left_time)
         print()
         print("Epoch {:05d} | Loss {:4f} ".format(epoch, total_loss))
         # acc = evaluate(model, g, val_dataloader)
@@ -168,25 +151,19 @@ def train(args, device, g, dataset, model):
         #       .format(epoch, total_loss / (it+1), acc.item()))
     print()
     print('mean training time/epoch {}'.format(mean(train_time_list)))
-    print('mean dataloader time/epoch {}'.format(mean(dataloader_t_list)))
-    print('mean feature label time/epoch {}'.format(mean(feature_label_time_list)))
-    print('mean modeling time/epoch {}'.format(mean(model_time_list)))
-    print('mean left time/epoch {}'.format(mean(loss_opt_time_list)))
-    
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
 
-    # parser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
-    #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
-    #                         "'puregpu' for pure-GPU training.")
-    # argparser.add_argument("--mode", default='mixed', choices=['cpu', 'mixed', 'puregpu'],
-    #                     help="Training mode. 'cpu' for CPU training, \
-    #                                         'mixed' for CPU-GPU mixed training, "
-    #                                         "'puregpu' for pure-GPU training.")
-    argparser.add_argument("--mode", default='puregpu', choices=['cpu', 'mixed', 'puregpu'],
+    argparser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
                         help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
                             "'puregpu' for pure-GPU training.")
+    # argparser.add_argument("--mode", default='mixed', choices=['cpu', 'mixed', 'puregpu'],
+    #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
+    #                         "'puregpu' for pure-GPU training.")
+    # parser.add_argument("--mode", default='puregpu', choices=['cpu', 'mixed', 'puregpu'],
+    #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
+    #                         "'puregpu' for pure-GPU training.")
     argparser.add_argument('--seed', type=int, default=1236)
     argparser.add_argument('--setseed', type=bool, default=True)
     argparser.add_argument('--dataset', type=str, default='ogbn-products')

@@ -26,6 +26,22 @@ def set_seed(args):
 		dgl.seed(args.seed)
 		dgl.random.seed(args.seed)
 
+def load_block_subtensor(nfeat, labels, blocks, device,args):
+	"""
+	Extracts features and labels for a subset of nodes
+	"""
+
+	# if args.GPUmem:
+	# 	see_memory_usage("----------------------------------------before batch input features to device")
+	batch_inputs = nfeat[blocks[0].srcdata[dgl.NID]].to(device)
+	# if args.GPUmem:
+	# 	see_memory_usage("----------------------------------------after batch input features to device")
+	batch_labels = labels[blocks[-1].dstdata[dgl.NID]].to(device)
+	# print(type(batch_labels))
+	# if args.GPUmem:
+	# 	see_memory_usage("----------------------------------------after  batch labels to device")
+	return batch_inputs, batch_labels
+
 class SAGE(nn.Module):
     def __init__(self, in_size, hid_size, out_size):
         super().__init__()
@@ -100,8 +116,7 @@ def train(args, device, g, dataset, model):
     full_batch_size = len(train_idx)
     
     sampler = NeighborSampler([10, 25, 30],  # fanout for [layer-0, layer-1, layer-2]
-                              prefetch_node_feats=['feat'],
-                              prefetch_labels=['label'])
+                            )
     use_uva = (args.mode == 'mixed')
     train_dataloader = DataLoader(g, train_idx, sampler, device=device,
                                   batch_size=full_batch_size, shuffle=True,
@@ -177,7 +192,7 @@ def train(args, device, g, dataset, model):
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
 
-    # parser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
+    # argparser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
     #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
     #                         "'puregpu' for pure-GPU training.")
     # argparser.add_argument("--mode", default='mixed', choices=['cpu', 'mixed', 'puregpu'],
@@ -191,7 +206,7 @@ if __name__ == '__main__':
     argparser.add_argument('--setseed', type=bool, default=True)
     argparser.add_argument('--dataset', type=str, default='ogbn-products')
     argparser.add_argument('--num-hidden', type=int, default=128)
-    argparser.add_argument("--epochs", type=int, default=20)
+    argparser.add_argument("--epochs", type=int, default=40)
     argparser.add_argument('--log-indent', type=int, default=10)
     
 

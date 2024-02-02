@@ -155,13 +155,13 @@ def train(args, device, g, dataset, model):
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
 
-    # parser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
+    # argparser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
     #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
     #                         "'puregpu' for pure-GPU training.")
     argparser.add_argument("--mode", default='mixed', choices=['cpu', 'mixed', 'puregpu'],
                         help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
                             "'puregpu' for pure-GPU training.")
-    # parser.add_argument("--mode", default='puregpu', choices=['cpu', 'mixed', 'puregpu'],
+    # argparser.add_argument("--mode", default='puregpu', choices=['cpu', 'mixed', 'puregpu'],
     #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
     #                         "'puregpu' for pure-GPU training.")
     argparser.add_argument('--seed', type=int, default=1236)
