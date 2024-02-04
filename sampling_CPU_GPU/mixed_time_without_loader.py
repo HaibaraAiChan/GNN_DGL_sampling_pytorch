@@ -185,7 +185,7 @@ if __name__ == '__main__':
     argparser.add_argument('--setseed', type=bool, default=True)
     argparser.add_argument('--dataset', type=str, default='ogbn-products')
     argparser.add_argument('--num-hidden', type=int, default=128)
-    argparser.add_argument("--epochs", type=int, default=20)
+    argparser.add_argument("--epochs", type=int, default=40)
     argparser.add_argument('--log-indent', type=int, default=10)
     
 

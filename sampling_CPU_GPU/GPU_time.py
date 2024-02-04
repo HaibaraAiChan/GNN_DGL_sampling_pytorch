@@ -180,18 +180,18 @@ if __name__ == '__main__':
     # parser.add_argument("--mode", default='cpu', choices=['cpu', 'mixed', 'puregpu'],
     #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
     #                         "'puregpu' for pure-GPU training.")
-    argparser.add_argument("--mode", default='mixed', choices=['cpu', 'mixed', 'puregpu'],
-                        help="Training mode. 'cpu' for CPU training, \
-                                            'mixed' for CPU-GPU mixed training, "
-                                            "'puregpu' for pure-GPU training.")
-    # parser.add_argument("--mode", default='puregpu', choices=['cpu', 'mixed', 'puregpu'],
-    #                     help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
-    #                         "'puregpu' for pure-GPU training.")
+    # argparser.add_argument("--mode", default='mixed', choices=['cpu', 'mixed', 'puregpu'],
+    #                     help="Training mode. 'cpu' for CPU training, \
+    #                                         'mixed' for CPU-GPU mixed training, "
+    #                                         "'puregpu' for pure-GPU training.")
+    argparser.add_argument("--mode", default='puregpu', choices=['cpu', 'mixed', 'puregpu'],
+                        help="Training mode. 'cpu' for CPU training, 'mixed' for CPU-GPU mixed training, "
+                            "'puregpu' for pure-GPU training.")
     argparser.add_argument('--seed', type=int, default=1236)
     argparser.add_argument('--setseed', type=bool, default=True)
     argparser.add_argument('--dataset', type=str, default='ogbn-products')
     argparser.add_argument('--num-hidden', type=int, default=128)
-    argparser.add_argument("--epochs", type=int, default=20)
+    argparser.add_argument("--epochs", type=int, default=60)
     argparser.add_argument('--log-indent', type=int, default=10)
     
 
