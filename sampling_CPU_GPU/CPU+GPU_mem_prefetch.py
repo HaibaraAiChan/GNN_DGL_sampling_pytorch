@@ -174,7 +174,7 @@ def run(args, device, g, dataset, model):
 	
 
 	args.num_workers = 0
-	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
+	full_batch_dataloader = dgl.dataloading.DataLoader(
 		g,
 		train_nid,
 		sampler,
@@ -258,9 +258,9 @@ def main():
 	# argparser.add_argument('--load-full-batch', type=bool, default=False)
 	# argparser.add_argument('--load-full-batch', type=bool, default=True)
 	# argparser.add_argument('--root', type=str, default='../my_full_graph/')
-	argparser.add_argument('--dataset', type=str, default='ogbn-arxiv')
+	# argparser.add_argument('--dataset', type=str, default='ogbn-arxiv')
 	# argparser.add_argument('--dataset', type=str, default='ogbn-mag')
-	# argparser.add_argument('--dataset', type=str, default='ogbn-products')
+	argparser.add_argument('--dataset', type=str, default='ogbn-products')
 	# argparser.add_argument('--aggre', type=str, default='lstm')
 	# argparser.add_argument('--dataset', type=str, default='cora')
 	# argparser.add_argument('--dataset', type=str, default='karate')

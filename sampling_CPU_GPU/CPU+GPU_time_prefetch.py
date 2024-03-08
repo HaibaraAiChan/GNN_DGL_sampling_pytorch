@@ -161,7 +161,7 @@ def run(args, device, g, dataset, model):
 	batch_size = int(full_batch_size/args.num_batch) + (full_batch_size % args.num_batch>0)
 	args.batch_size = batch_size
 	args.num_workers = 0
-	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
+	full_batch_dataloader = dgl.dataloading.DataLoader(
 		g,
 		train_nid,
 		sampler,
