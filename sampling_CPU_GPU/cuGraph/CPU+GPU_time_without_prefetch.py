@@ -27,10 +27,15 @@ import pickle
 
 import os 
 import sys
-sys.path.insert(0,'..')
-sys.path.insert(0,'../micro_batch_train')
-sys.path.insert(0,'../models')
-sys.path.insert(0,'../utils')
+# sys.path.insert(0,'..')
+# sys.path.insert(0,'../../micro_batch_train')
+# sys.path.insert(0,'../../models')
+# sys.path.insert(0,'../../utils')
+sys.path.insert(0,'/home/cc')
+sys.path.insert(0,'/home/cc/GNN_DGL_sampling_pytorch/micro_batch_train')
+sys.path.insert(0,'/home/cc/GNN_DGL_sampling_pytorch/models')
+sys.path.insert(0,'/home/cc/GNN_DGL_sampling_pytorch/utils')
+
 from memory_usage import see_memory_usage, nvidia_smi_usage
 import argparse
 
@@ -121,6 +126,16 @@ def load_subtensor(nfeat, labels, seeds, input_nodes, device):
 	batch_labels = labels[seeds].to(device)
 	return batch_inputs, batch_labels
 
+
+def load_cu_subtensor(nfeat, labels, seeds, input_nodes, device):
+	"""
+	Extracts features and labels for a subset of nodes
+	"""
+	batch_inputs = nfeat['_N'][input_nodes].to(device)
+	batch_labels = labels['_N'][seeds].to(device)
+	return batch_inputs, batch_labels
+
+
 def load_block_subtensor( blocks, device, args):
 	"""
 	Extracts features and labels for a subset of nodes
@@ -150,7 +165,10 @@ def get_FL_output_num_nids(blocks):
 
 #### Entry point
 def run(args, device, g, dataset, model):
-	
+	from cugraph_dgl.convert import cugraph_storage_from_heterograph
+	see_memory_usage("----------------------------------------before graph to cugraph ")
+	cugraph_g = cugraph_storage_from_heterograph(g)
+	see_memory_usage("----------------------------------------after graph to cugraph")
 	# Unpack data
 	train_nid = dataset.train_idx.to(device)
 	# val_idx = dataset.val_idx.to(device)
@@ -160,8 +178,8 @@ def run(args, device, g, dataset, model):
 	batch_size = int(full_batch_size/args.num_batch) + (full_batch_size % args.num_batch>0)
 	args.batch_size = batch_size
 	args.num_workers = 0
-	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
-		g,
+	full_batch_dataloader = dgl.dataloading.DataLoader(
+		cugraph_g,
 		train_nid,
 		sampler,
 		device='cpu',
@@ -193,15 +211,18 @@ def run(args, device, g, dataset, model):
 			model_time = 0
 			left_time = 0
 			train_start= time.time()
+			see_memory_usage("----------------------------------------before train dataloader ")
 			for step, (input_nodes, seeds, blocks) in enumerate(full_batch_dataloader):
 				after_dataloader_t = time.time()
 				dataloader_time += after_dataloader_t - train_start
-
-				x = blocks[0].srcdata['feat'].to(torch.device('cuda'))###############
-				y = blocks[-1].dstdata['label'].to(torch.device('cuda'))
-				# batch_inputs, batch_labels = load_block_subtensor(blocks, torch.device('cuda'), args)#------------*
+				print(blocks[0])
+				# x = blocks[0].srcdata['feat'].to(torch.device('cuda'))###############
+				# y = blocks[-1].dstdata['label'].to(torch.device('cuda'))
+				see_memory_usage("----------------------------------------after train dataloader ")
+				x, y = load_cu_subtensor(cugraph_g.ndata['feat'],cugraph_g.ndata['label'], seeds,input_nodes, torch.device('cuda'))#------------*
+				see_memory_usage("----------------------------------------after x, y to cuda ")
 				blocks = [block.to(torch.device('cuda')) for block in blocks]#------------*
-    
+				see_memory_usage("----------------------------------------before model ")
 				before_model_t = time.time()
 				batch_pred = model(blocks, x)#------------*
 				after_model_t = time.time()
@@ -215,6 +236,11 @@ def run(args, device, g, dataset, model):
 				after_opt_step = time.time()
 				left_time += after_opt_step - after_model_t
 				total_loss += loss.item()
+				x = x.to('cpu')
+				y = y.to('cpu')
+				see_memory_usage("----------------------------------------before release unused memory ")
+				torch.cuda.empty_cache()
+				see_memory_usage("----------------------------------------after release unused memory ")
     
 			train_end = time.time()
 			if epoch >= args.log_indent:

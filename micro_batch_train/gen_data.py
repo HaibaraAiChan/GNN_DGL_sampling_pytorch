@@ -179,7 +179,8 @@ def run(args, device, data):
 	
 
 	args.num_workers = 0
-	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
+	# full_batch_dataloader = dgl.dataloading.NodeDataLoader( # old version dgl
+	full_batch_dataloader = dgl.dataloading.DataLoader(
 		g,
 		train_nid,
 		sampler,

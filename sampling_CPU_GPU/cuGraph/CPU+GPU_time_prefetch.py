@@ -28,9 +28,9 @@ import pickle
 import os 
 import sys
 sys.path.insert(0,'..')
-sys.path.insert(0,'../micro_batch_train')
-sys.path.insert(0,'../models')
-sys.path.insert(0,'../utils')
+sys.path.insert(0,'../../micro_batch_train')
+sys.path.insert(0,'../../models')
+sys.path.insert(0,'../../utils')
 from memory_usage import see_memory_usage, nvidia_smi_usage
 import argparse
 
@@ -150,7 +150,8 @@ def get_FL_output_num_nids(blocks):
 
 #### Entry point
 def run(args, device, g, dataset, model):
-	
+	from cugraph_dgl.convert import cugraph_storage_from_heterograph
+	cugraph_g = cugraph_storage_from_heterograph(g)
 	# Unpack data
 	train_nid = dataset.train_idx.to(device)
 	# val_idx = dataset.val_idx.to(device)
@@ -161,11 +162,11 @@ def run(args, device, g, dataset, model):
 	batch_size = int(full_batch_size/args.num_batch) + (full_batch_size % args.num_batch>0)
 	args.batch_size = batch_size
 	args.num_workers = 0
-	full_batch_dataloader = dgl.dataloading.NodeDataLoader(
-		g,
+	full_batch_dataloader = dgl.dataloading.DataLoader(
+		cugraph_g,
 		train_nid,
 		sampler,
-		device='cpu',
+		device=torch.device('cuda'),
 		batch_size=batch_size,
 		shuffle=True,
 		drop_last=False,
